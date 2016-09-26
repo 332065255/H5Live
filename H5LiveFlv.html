@@ -26,9 +26,11 @@
 //			var elem;
 			window.onload = function() {
 				//如果flv是跨域的,用https://cors-anywhere.herokuapp.com/ 后面跟上你们的flv地址即可
-				Live.init("https://cors-anywhere.herokuapp.com/http://dvr-ws.csslcloud.net/src/AE3C4B5BCABAA3AE9C33DC5901307461.flv","pchVideo")
+//				Live.init("https://cors-anywhere.herokuapp.com/http://dvr-ws.csslcloud.net/src/AE3C4B5BCABAA3AE9C33DC5901307461.flv","pchVideo")
 			};
-
+			function goPlay(){
+				Live.init(document.getElementById("srcUrl").value,"pchVideo");
+			}
 		</script>
 	</head>
 	<body>
@@ -40,6 +42,9 @@
 		<div	 style="width: 30%;height: 50px;margin: auto;>
 			<div id="timeCurrent" style="float: left;"></div>
 			<div id="time" style="float: left;"></div>
+			<input style="width: 90%;" type="text" id="srcUrl" value="https://cors-anywhere.herokuapp.com/http://dvr-ws.csslcloud.net/src/AE3C4B5BCABAA3AE9C33DC5901307461.flv"/>
+			<button onclick="goPlay()">Play</button>
 		</div>
+		
 	</body>
 </html>
