@@ -102,6 +102,39 @@
 				    fetch(req).then(function(response) {  
 				    		//  typeof(response.body)==ReadableStream
 				        var reader = response.body.getReader();  
+				        /*
+				         * response.body是一个ReadableStream的实现对象
+				         * ReadableStream的官方文档地址https://streams.spec.whatwg.org/#rs-class
+				         * ReadableStream.getReader()的官方解释The getReader method creates a reader of the type specified by the mode option and locks the stream to the new reader. While the stream is locked, no other reader can be acquired until this one is released.
+				         * getReader()方法是可以带参数的getReader({ mode } = {})
+				         * When mode is undefined, the method creates a default reader (an instance of ReadableStreamDefaultReader). The reader provides the ability to directly read individual chunks from the stream via the reader’s read() method.
+				         * 
+				         * When mode is "byob", the getReader method creates a BYOB reader (an instance of ReadableStreamBYOBReader). This feature only works on readable byte streams, i.e. streams which were constructed specifically with the ability to handle "bring your own buffer" reading. The reader provides the ability to directly read individual chunks from the stream via the reader’s read() method, into developer-supplied buffers, allowing more precise control over allocation.
+				         * 
+				         * 如果getReader()什么都不写,就是基本的ReadableStreamDefaultReader 对象,read()方法也是全自动的
+				         * 
+				         * 如果getReader({'mode':'byob'}),会返回一个ReadableStreamBYOBReader 对象
+				         * 
+				         * ReadableStreamBYOBReader对象就屌了
+				         * 
+				         * 3.6.4.3. read(view)
+
+							The read method will write read bytes into view and return a promise resolved with a possibly transferred buffer as described below.
+							If the chunk does become available, the promise will be fulfilled with an object of the form { value: theChunk, done: false }.
+							If the stream becomes closed, the promise will be fulfilled with an object of the form { value: undefined, done: true }.
+							If the stream becomes errored, the promise will be rejected with the relevant error.
+							If reading a chunk causes the queue to become empty, more data will be pulled from the underlying byte source.
+							If ! IsReadableStreamBYOBReader(this) is false, return a promise rejected with a TypeError exception.
+							If this.[[ownerReadableStream]] is undefined, return a promise rejected with a TypeError exception.
+							If Type(view) is not Object, return a promise rejected with a TypeError exception.
+							If view does not have a [[ViewedArrayBuffer]] internal slot, return a promise rejected with a TypeError exception.
+							If view.[[ByteLength]] is 0, return a promise rejected with a TypeError exception.
+							Return ! ReadableStreamBYOBReaderRead(this, view).
+				         * 
+				         * 很明显,这个read方法需要传入一个viewArrayBuffer的对象进去,而这个viewArrayBuffer可以uint8Array,但是这个对象长度不能为0
+				         * 如果这个viewArrayBuffer对象的长度是10000,那么read(viewArrayBuffer).then(function(chunk,done){console.log(chunk.bytelength)})//这里输出为10000,就是你可以自己控制读取多少数据
+				         * 屌了吧...
+				         */
 				        return _this.readr(reader);
 				    })
 				    _this.firstRun=true;
