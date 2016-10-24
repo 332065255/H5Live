@@ -7,7 +7,7 @@
 #### 现在还是不太稳定,只是证明了可以播放flv直播,后续会解决稳定问题
 #### [线上示例(demo)](http://gao11.cn/h5live/H5LiveFlv.html) 
 ###### 有兴趣者可以联系我邮箱332065255@qq.com互相探讨
-![screenshot](http://gao11.cn/img/1.jpg)
+![screenshot](http://gao111.top/img/1.jpg)
 -----------------------------------------
 ### 第一次更新
 		* 代码没有整理
