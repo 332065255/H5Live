@@ -89,22 +89,22 @@
 						_this.sourceBufferOnUpdateend();
 					});
 			
-//					_this.sourceBuffer.addEventListener('update', () => {
-//						let ranges = [];
-//						let buffered = _this.sourceBuffer.buffered;
-//						for (let i = 0; i < buffered.length; i++) {
-//							ranges.push([buffered.start(i), buffered.end(i)]);
-//						}
-//						console.log('bufupdate:', JSON.stringify(ranges), 'time', videoEx.video.currentTime);
-//			
-//						if (buffered.length > 0) {
-//							if (videoEx.video.currentTime < buffered.start(0) || 
-//									videoEx.video.currentTime > buffered.end(buffered.length-1)) 
-//							{
-//								videoEx.video.currentTime = buffered.start(0)+0.1;
-//							}
-//						}
-//					});
+					_this.sourceBuffer.addEventListener('update', () => {
+						let ranges = [];
+						let buffered = _this.sourceBuffer.buffered;
+						for (let i = 0; i < buffered.length; i++) {
+							ranges.push([buffered.start(i), buffered.end(i)]);
+						}
+						console.log('bufupdate:', JSON.stringify(ranges), 'time', videoEx.video.currentTime);
+			
+						if (buffered.length > 0) {
+							if (buffered.end(buffered.length-1)-videoEx.video.currentTime >5 ) 
+							{
+								console.log("更新的时间超过了5秒")
+								videoEx.video.currentTime = buffered.end(buffered.length-1)-3;
+							}
+						}
+					});
 					var req = new Request(_this._liveSrc, {method: 'GET', cache: 'default',mode:"cors"});  
 				    fetch(req).then(function(response) {  
 				    		//  typeof(response.body)==ReadableStream
@@ -259,7 +259,7 @@
 ////							_this.arrTag=[];
 							_this.sourceBuffer.appendBuffer(u8a);
 //							_this.arr=[];
-							console.log("执行成功一次",_this.sourceBuffer.buffered);
+							console.log("执行成功一次",_this.sourceBuffer.buffered.length);
 
 							
 						}
@@ -280,7 +280,7 @@
             	})
 			},
 			sourceBufferOnUpdateend:function(){
-				if(_this.arr.length>0)
+				if(_this.arr.length>0&&!_this.sourceBuffer.updating)
 				{
 					var u8a=new Uint8Array(_this.arr.shift());//拿出所有完整的tag
 	//				_this.arrTag=[];
