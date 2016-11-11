@@ -55,7 +55,14 @@
 			
 		videoTrackF:{},
 		audioTrackF:{},
-			
+		///保存一个关键帧
+		segpktsKeyFrame:[],
+		//关键帧数组是否含有一个关键帧,
+		segpktsHasKeyFrame:false,
+		//一次关键帧数组读取完毕
+		segpktsOnce:false,
+		///保存没排进这个关键帧的剩下的segpkts
+		segpktsRemain:[],
 		sclas:1,
 		firstSet:false,
 
@@ -82,22 +89,22 @@
 						_this.sourceBufferOnUpdateend();
 					});
 			
-					_this.sourceBuffer.addEventListener('update', () => {
-						let ranges = [];
-						let buffered = _this.sourceBuffer.buffered;
-						for (let i = 0; i < buffered.length; i++) {
-							ranges.push([buffered.start(i), buffered.end(i)]);
-						}
-						console.log('bufupdate:', JSON.stringify(ranges), 'time', videoEx.video.currentTime);
-			
-						if (buffered.length > 0) {
-							if (videoEx.video.currentTime < buffered.start(0) || 
-									videoEx.video.currentTime > buffered.end(buffered.length-1)) 
-							{
-								videoEx.video.currentTime = buffered.start(0)+0.1;
-							}
-						}
-					});
+//					_this.sourceBuffer.addEventListener('update', () => {
+//						let ranges = [];
+//						let buffered = _this.sourceBuffer.buffered;
+//						for (let i = 0; i < buffered.length; i++) {
+//							ranges.push([buffered.start(i), buffered.end(i)]);
+//						}
+//						console.log('bufupdate:', JSON.stringify(ranges), 'time', videoEx.video.currentTime);
+//			
+//						if (buffered.length > 0) {
+//							if (videoEx.video.currentTime < buffered.start(0) || 
+//									videoEx.video.currentTime > buffered.end(buffered.length-1)) 
+//							{
+//								videoEx.video.currentTime = buffered.start(0)+0.1;
+//							}
+//						}
+//					});
 					var req = new Request(_this._liveSrc, {method: 'GET', cache: 'default',mode:"cors"});  
 				    fetch(req).then(function(response) {  
 				    		//  typeof(response.body)==ReadableStream
@@ -151,22 +158,9 @@
 		                return reader.cancel();
 		            }
             			_this.soFar += chunk.byteLength;
-//          			if(soFar>50000)
-//          			{
-//          				_this.Progresss(new Uint8Array(arrTempCache))
-						_this.Progresss(chunk);
-//          				arrTempCache=[];
-//          				soFar=0;
-//          			}
-//          			else
-//          			{
-//          				
-//          				arrTempCache=arrTempCache.concat(_this.Uint8Array2Array(chunk))
-//          				console.log(soFar,arrTempCache.length)
-//          				return _this.readr(reader);
-//          			}
-//          			console.log(soFar,"current",chunk.byteLength);
-            			
+					_this.arrTempCache=_this.arrTempCache.concat(_this.Uint8Array2Array(chunk))
+					_this.Progresss(chunk);
+
             			if(_this.arrMetaTag.length>3&&!_this.fristMoovSet)
             			{
             				console.log(_this.arrMetaTag);
@@ -222,52 +216,66 @@
             			}
             			else if(_this.arrMetaTag.length>3&&_this.arrTag.length>0)
             			{
-            				_this.testIndex+=1;
             				
+//          				console.log(_this.arrTag);
             				let segpkts = parseMediaSegment(new Uint8Array(_this.arrTag));
-//          				console.log(segpkts)
-            				var u8arr=(_this.decodeflv2Mp4(segpkts));
-//          				
             				_this.arrTag=[];
-            				
-            				
+            				_this.segpktsRemain=_this.segpktsRemain.concat(segpkts);
+//          				console.log(_this.segpktsRemain)
+						while(!_this.segpktsOnce&&_this.segpktsRemain.length>0)
+						{
+							if(_this.segpktsRemain[0].type=='video'&&_this.segpktsRemain[0].isKeyFrame&&!_this.segpktsHasKeyFrame)
+							{
+								_this.segpktsHasKeyFrame=true;
+								_this.segpktsKeyFrame.push(_this.segpktsRemain.shift());
+								continue;
+							}
+							else if(_this.segpktsRemain[0].type=='video'&&_this.segpktsRemain[0].isKeyFrame&&_this.segpktsHasKeyFrame)
+							{
+								_this.segpktsOnce=true;
+							}
+							else{
+								_this.segpktsKeyFrame.push(_this.segpktsRemain.shift());
+							}
+						}
+						if(!_this.segpktsOnce)
+						{
+							return _this.readr(reader);
+						}
+//          				
+//          				
+						console.log("一次完整的关键帧包",_this.segpktsKeyFrame,"余下的帧",_this.segpktsRemain);
+
+						var u8arr=(_this.decodeflv2Mp4(_this.segpktsKeyFrame));
+						_this.segpktsKeyFrame=[];
+						_this.segpktsOnce=false;
+						_this.segpktsHasKeyFrame=false;
+            				_this.arrTag=[];
             				if(!_this.sourceBuffer.updating&&_this.arr.length==0)
 						{
 //							_this.arr=_this.arr.concat(_this.Uint8Array2Array(u8arr))
-//							_this.arr.push(_this.Uint8Array2Array(u8arr))
-//							var u8a=new Uint8Array(_this.arr.shift());//拿出所有完整的tag
+							_this.arr.push(_this.Uint8Array2Array(u8arr))
+							var u8a=new Uint8Array(_this.arr.shift());//拿出所有完整的tag
 ////							_this.arrTag=[];
-							_this.sourceBuffer.appendBuffer(u8arr);
+							_this.sourceBuffer.appendBuffer(u8a);
 //							_this.arr=[];
 							console.log("执行成功一次",_this.sourceBuffer.buffered);
-//							firstSet=true;
-//							for(var i=0;i<_this.sourceBuffer.buffered.length;i++)
-//							{
-//								console.log("start",_this.sourceBuffer.buffered.start(i),"end",_this.sourceBuffer.buffered.end(i))
-//							}
+
 							
 						}
 						else
 						{
-//							_this.arr=_this.arr.concat(_this.Uint8Array2Array(u8arr))
 							_this.arr.push(_this.Uint8Array2Array(u8arr));
 							console.log("还在更新呢",_this.sourceBuffer.buffered);
-//							for(var i=0;i<_this.sourceBuffer.buffered.length;i++)
-//							{
-//								console.log("start",_this.sourceBuffer.buffered.start(i),"end",_this.sourceBuffer.buffered.end(i))
-//							}
 						}
             			}
             			
-//          			if(_this.testIndex==100)
+//          			if(_this.testIndex==15)
 //          			{
 //          				return reader.cancel();
 //          			}
 //          			console.log(_this.sourceBuffer.appendBuffer)
-					
-            			
-            			
-//          			console.log(_this.soFar);
+
             			return _this.readr(reader);
             	})
 			},
@@ -275,7 +283,7 @@
 				if(_this.arr.length>0)
 				{
 					var u8a=new Uint8Array(_this.arr.shift());//拿出所有完整的tag
-	//							_this.arrTag=[];
+	//				_this.arrTag=[];
 					_this.sourceBuffer.appendBuffer(u8a.buffer);
 				}
 			},
