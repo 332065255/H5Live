@@ -85,7 +85,6 @@
 					_this.sourceBuffer.addEventListener('error', () => console.log('sourceBuffer: error'));
 					_this.sourceBuffer.addEventListener('abort', () => console.log('sourceBuffer: abort'));
 					_this.sourceBuffer.addEventListener('updateend', () => {
-						console.log('sourceBuffer: updateend')
 						_this.sourceBufferOnUpdateend();
 					});
 			
@@ -244,7 +243,7 @@
 						}
 //          				
 //          				
-						console.log("一次完整的关键帧包",_this.segpktsKeyFrame,"余下的帧",_this.segpktsRemain);
+//						console.log("一次完整的关键帧包",_this.segpktsKeyFrame,"余下的帧",_this.segpktsRemain);
 
 						var u8arr=(_this.decodeflv2Mp4(_this.segpktsKeyFrame));
 						_this.segpktsKeyFrame=[];
@@ -282,9 +281,10 @@
 			sourceBufferOnUpdateend:function(){
 				if(_this.arr.length>0&&!_this.sourceBuffer.updating)
 				{
+					console.log("updateend 成功执行一次append")
 					var u8a=new Uint8Array(_this.arr.shift());//拿出所有完整的tag
-	//				_this.arrTag=[];
-					_this.sourceBuffer.appendBuffer(u8a.buffer);
+//					_this.sourceBuffer.appendBuffer(u8a.buffer);
+					_this.sourceBuffer.appendBuffer(u8a);
 				}
 			},
 			//主体解码flv2mp4
