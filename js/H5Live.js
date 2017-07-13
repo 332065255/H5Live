@@ -65,7 +65,7 @@
 		segpktsRemain:[],
 		sclas:1,
 		firstSet:false,
-
+		squereNumber:0,
 		init:function(liveSrc){
 			_this=this;
 			_this._liveSrc=liveSrc;
@@ -104,7 +104,10 @@
 							}
 						}
 					});
-					var req = new Request(_this._liveSrc, {method: 'GET', cache: 'default',mode:"cors"});  
+					
+					var headers=new window.Headers();
+					
+					var req = new Request(_this._liveSrc, { headers: headers,method: 'GET', cache: 'default',mode:"cors"});  
 				    fetch(req).then(function(response) {  
 				    		//  typeof(response.body)==ReadableStream
 				        var reader = response.body.getReader();  
@@ -384,18 +387,18 @@
 				let moof, _mdat, mdat;
 				let list = [];
 //				console.log("视频包开始时间",videoTrack._firstTime,"视频包结束时间",videoTrack._lastTime,"音频包开始时间",audioTrack._firstTime,"音频包结束时间",audioTrack._lastTime,"视频包大小",videoTrack._mdatSize,"音频包大小",audioTrack._mdatSize)
-				moof = mp4mux.moof(0, [videoTrack]);
+				moof = mp4mux.moof(mediaSourceEx.squereNumber, [videoTrack]);
 				_mdat = new Uint8Array(videoTrack._mdatSize);
 				videoTrack.samples.forEach(sample => _mdat.set(sample._data, sample._offset));
 				mdat = mp4mux.mdat(_mdat);
 				list = list.concat([moof, mdat]);
-		
-				moof = mp4mux.moof(0, [audioTrack]);
+				mediaSourceEx.squereNumber++;
+				moof = mp4mux.moof(mediaSourceEx.squereNumber, [audioTrack]);
 				_mdat = new Uint8Array(audioTrack._mdatSize);
 				audioTrack.samples.forEach(sample => _mdat.set(sample._data, sample._offset));
 				mdat = mp4mux.mdat(_mdat);
 				list = list.concat([moof, mdat]);
-		
+				mediaSourceEx.squereNumber++;
 				return _this.concatUint8Array(list);
 			},
 			concatUint8Array:function(list) {
