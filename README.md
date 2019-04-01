@@ -1,3 +1,4 @@
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 # H5Live
 ## 只能运行在chrome和火狐浏览器上面,需要浏览器支持fetch Api
 ### Can play FLV  live  HTML 5 projects
